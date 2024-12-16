@@ -12,9 +12,9 @@ class BaseMixin:
 
     @classmethod
     def _convert_link_to_tg(cls, link: str):
-        # /b/12121 -> /b-12121
+        # /b/12121 -> /b_12121
         _, letter, num = link.split('/')
-        return f"/{letter}-{num}"
+        return f"/{letter}_{num}"
 
 class BookPage(BaseMixin):
 
@@ -66,7 +66,7 @@ class Flibusta(BaseMixin):
     async def get_search_text(cls, query: str) -> str:
         async with aiohttp.ClientSession(headers=cls.headers) as session:
             resp = await session.get(f"{cls.url}/booksearch?ask={query}")
-            soup = BeautifulSoup(await resp.read())
+            soup = BeautifulSoup(await resp.read(), "html.parser")
         headers = soup.find_all('h3')
         result = ""
         for h3 in headers:
@@ -79,9 +79,9 @@ class Flibusta(BaseMixin):
 
     @classmethod
     async def get_page(cls, link: str) -> Union[BookPage, AuthorPage]:
-        # links type a-1234 or b-1234
-        letter, num = link.split('-')
-        link = link.replace('-', '/')
+        # links type /a_1234 or /b_234
+        letter, num = link[1:].split('_')
+        link = link.replace('_', '/')
         async with aiohttp.ClientSession(headers=cls.headers) as session:
             if letter=='a':
                 resp = await session.get(f"{cls.url}/{link}?lang=__&order=a&hg1=1&sa1=1&hr1=1")
@@ -92,12 +92,3 @@ class Flibusta(BaseMixin):
                 soup = BeautifulSoup(await resp.read(),"html.parser")
                 return BookPage(soup)
         raise InvalidLinkException(f"{link} and its letter {letter} is not acceptable.")
-
-# async def main():
-#     # page = await Flibusta.get_page("a-2755")
-#     page = await Flibusta.get_page("b-1488")
-#     page = await Flibusta.get_page("b-441")
-#     page = await Flibusta.get_page("b-771")
-#     print(page.text())
-#
-# asyncio.run(main())
