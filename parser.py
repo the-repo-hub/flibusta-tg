@@ -2,6 +2,7 @@ import asyncio
 
 import aiohttp
 import fake_useragent
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from typing import Union
 
@@ -25,7 +26,7 @@ class BookPage(BaseMixin):
 
     def __init__(self, soup: BeautifulSoup):
         _header = soup.find('h1', {'class': 'title'})
-        self.header = _header.text
+        self.name = _header.text
         self.author = _header.find_next_sibling('a').text
         self.author_link = self._convert_link_to_tg(_header.find_next_sibling('a').get('href'))
         try:
@@ -38,11 +39,13 @@ class BookPage(BaseMixin):
             self.cover_link = None
         _div = _header.find_next_sibling('div')
         _span_size = _div.find('span')
-        self.links = list(map(lambda tag: tag.get('href'), _span_size.find_next_siblings('a')[1:]))
+        _links_tags = _span_size.find_next_siblings('a')[1:] #cut read
+        self.links = [link.get('href') for link in _links_tags]
 
     def text(self) -> str:
-        result = f"{self.header}\n\n{self.author} {self.author_link}\n\nАннотация:\n\n{self.annotation}"
+        result = f"{self.name}\n\n{self.author} {self.author_link}\n\nАннотация:\n\n{self.annotation}"
         return result
+
 
 class AuthorPage(BaseMixin):
 
@@ -110,5 +113,3 @@ class Flibusta(BaseMixin):
                 soup = BeautifulSoup(await resp.read(),"html.parser")
                 return BookPage(soup)
         raise InvalidLinkException(f"{link} and its letter {letter} is not acceptable.")
-
-asyncio.run(Flibusta.get_page("/b_135821"))
