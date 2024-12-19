@@ -38,7 +38,7 @@ class BookPage(BaseMixin):
         except AttributeError:
             self.cover_link = None
         _div = _header.find_next_sibling('div')
-        _span_size = _div.find('span')
+        _span_size = _div.find('span', {'style': 'size'})
         _links_tags = _span_size.find_next_siblings('a')[1:] #cut read
         self.links = [link.get('href') for link in _links_tags]
 
