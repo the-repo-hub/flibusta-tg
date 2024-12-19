@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
@@ -21,6 +20,7 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
         button = InlineKeyboardButton(text=_format, callback_data=link)
         result.add(button)
     return result.as_markup()
+
 
 @dp.message(CommandStart())
 async def start_handler(msg: Message):
@@ -48,7 +48,7 @@ async def search_handler(msg: Message):
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):
     full_url = f"{Flibusta.url}{call.data}"
-    name = call.message.caption.split('\n\n')[0]
+    name = call.message.html_text.split('\n\n')[0]
     full_name = f"{name}.{call.data.split('/')[-1]}"
     await bot.send_document(call.message.chat.id, URLInputFile(full_url, filename=full_name))
     await call.answer()
