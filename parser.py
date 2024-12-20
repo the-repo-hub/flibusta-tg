@@ -1,10 +1,9 @@
-import asyncio
+from typing import Union
 
 import aiohttp
 import fake_useragent
-from aiohttp import ClientSession
 from bs4 import BeautifulSoup
-from typing import Union
+
 
 class InvalidLinkException(Exception):
     pass
@@ -39,8 +38,11 @@ class BookPage(BaseMixin):
             self.cover_link = None
         _div = _header.find_next_sibling('div')
         _span_size = _div.find('span', {'style': 'size'})
-        _links_tags = _span_size.find_next_siblings('a')[1:] #cut read
+        _links_tags = _span_size.find_next_siblings('a')
+        if len(_links_tags) > 1:
+            _links_tags = _links_tags[1:]
         self.links = [link.get('href') for link in _links_tags]
+        self.num = int(self.links[0].split('/')[2])
 
     def text(self) -> str:
         result = f"{self.name}\n\n{self.author} {self.author_link}\n\nАннотация:\n\n{self.annotation}"
@@ -53,8 +55,8 @@ class AuthorPage(BaseMixin):
         _main = soup.find('div', {'id': 'main'})
         self.author = _main.find('h1').text
         _form_post = _main.find('form', {'method': "POST"})
-        _inputs = _form_post.find_all('input', {'type': "checkbox"})
-        self.books = [tag.find_next_sibling('a') for tag in _inputs]
+        _imgs = _form_post.find_all('img')
+        self.books = [tag.find_next_sibling('a') for tag in _imgs]
 
     def text(self) -> str:
         result = f"{self.author}\n\n"
@@ -101,7 +103,7 @@ class Flibusta(BaseMixin):
     @classmethod
     async def get_page(cls, link: str) -> Union[BookPage, AuthorPage]:
         # links type /a_1234 or /b_234
-        letter, num = link[1:].split('_')
+        letter, num = link.lstrip('/').split('_')
         link = link.replace('_', '/')
         async with aiohttp.ClientSession(headers=cls.headers) as session:
             if letter=='a':

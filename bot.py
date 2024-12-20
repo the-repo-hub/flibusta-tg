@@ -12,7 +12,8 @@ from parser import Flibusta, BookPage
 options = json.loads(open("options.json").read())
 bot = Bot(token=options.get('token'))
 dp = Dispatcher()
-limit = 4096
+message_limit = 4096
+caption_limit = 1024
 
 def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
     result = InlineKeyboardBuilder()
@@ -31,21 +32,21 @@ async def start_handler(msg: Message):
 async def book_handler(msg: Message):
     book_obj = await Flibusta.get_page(msg.text)
     markup = get_download_markup(book_obj)
-    text = book_obj.text()[:limit]
+    text = book_obj.text()
     if book_obj.cover_link:
-        await bot.send_photo(msg.chat.id, photo=book_obj.cover_link, caption=text, reply_markup=markup)
+        await bot.send_photo(msg.chat.id, photo=book_obj.cover_link, caption=text[:caption_limit], reply_markup=markup)
     else:
-        await bot.send_message(msg.chat.id, text=text, reply_markup=markup)
+        await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
 
 @dp.message(lambda msg: msg.text[:3]=="/a_")
 async def author_handler(msg: Message):
     author_obj = await Flibusta.get_page(msg.text)
-    await msg.reply(text=author_obj.text()[:limit])
+    await msg.reply(text=author_obj.text()[:message_limit])
 
 @dp.message()
 async def search_handler(msg: Message):
     result = (await Flibusta.get_search_text(msg.text)).text()
-    await msg.reply(result[:limit])
+    await msg.reply(result[:message_limit])
 
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):
