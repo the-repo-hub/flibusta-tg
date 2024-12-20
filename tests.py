@@ -23,32 +23,53 @@ books = [
              "/b_168419", "/b_801351", "/b_447416", "/b_531406", "/b_143911", "/b_473583", "/b_10534", "/b_10553",
              "/b_531407", "/b_531408", "/b_82090", "/b_82089", "/b_601904", "/b_367891", "/b_10539", "/b_580736",
              "/b_169409", "/b_143912", "/b_601973", "/b_82086", "/b_169442", "/b_169253", "/b_169450", "/b_169375",
-             "/b_447429", "/b_801154", "/b_531409", "/b_10545", "/b_16934"
+             "/b_447429", "/b_801154", "/b_531409", "/b_10545", "/b_16934", "/b_447430"
          ]
 
-authors = ['/a_303633', '/a_309182', '/a_217114', '/a_19245', '/a_267612', '/a_244522', '/a_229269', '/a_302205', '/a_310410', '/a_309803', '/a_264599', '/a_216090', '/a_157498', '/a_233764', '/a_301905', '/a_157503', '/a_92925', '/a_120423', '/a_124027', '/a_302870', '/a_253672', '/a_309184', '/a_230899', '/a_268646', '/a_189655', '/a_103654', '/a_12417', '/a_220773', '/a_198361', '/a_220751', '/a_306657', '/a_157504', '/a_273247', '/a_276466', '/a_162014', '/a_117538', '/a_236972', '/a_84483', '/a_112455', '/a_128763', '/a_245055', '/a_220699', '/a_220700', '/a_95031', '/a_220841', '/a_126418', '/a_250586', '/a_96806', '/a_266944', '/a_220914', '/a_238397', '/a_237106', '/a_99506', '/a_89518', '/a_236970', '/a_152764', '/a_220913', '/a_254416', '/a_33691', '/a_144593', '/a_220774', '/a_49547', '/a_238906', '/a_11010', '/a_157555', '/a_19243', '/a_262496', '/a_238186', '/a_104427', '/a_174391', '/a_302077', '/a_92642', '/a_160013', '/a_120262', '/a_298351', '/a_274522', '/a_98211', '/a_122119', '/a_226090', '/a_260343', '/a_55142', '/a_149452', '/a_281564', '/a_55553', '/a_235300', '/a_304459', '/a_96060', '/a_32907', '/a_136398', '/a_241214', '/a_220765', '/a_219675', '/a_207116', '/a_254703', '/a_189935', '/a_220101', '/a_61316', '/a_273136', '/a_55515', '/a_242789']
+authors = [
+    '/a_303633', '/a_309182', '/a_217114', '/a_19245', '/a_267612', '/a_244522', '/a_229269', '/a_302205', '/a_310410', '/a_309803', '/a_264599', '/a_216090', '/a_157498', '/a_233764', '/a_301905', '/a_157503', '/a_92925', '/a_120423', '/a_124027', '/a_302870', '/a_253672', '/a_309184', '/a_230899', '/a_268646', '/a_189655', '/a_103654', '/a_12417', '/a_220773', '/a_198361', '/a_220751', '/a_306657', '/a_157504', '/a_273247', '/a_276466', '/a_162014', '/a_117538', '/a_236972', '/a_84483', '/a_112455', '/a_128763', '/a_245055', '/a_220699', '/a_220700', '/a_95031', '/a_220841', '/a_126418', '/a_250586', '/a_96806', '/a_266944', '/a_220914', '/a_238397', '/a_237106', '/a_99506', '/a_89518', '/a_236970', '/a_152764', '/a_220913', '/a_254416', '/a_33691', '/a_144593', '/a_220774', '/a_49547', '/a_238906', '/a_11010', '/a_157555', '/a_19243', '/a_262496', '/a_238186', '/a_104427', '/a_174391', '/a_302077', '/a_92642', '/a_160013', '/a_120262', '/a_298351', '/a_274522', '/a_98211', '/a_122119', '/a_226090', '/a_260343', '/a_55142', '/a_149452', '/a_281564', '/a_55553', '/a_235300', '/a_304459', '/a_96060', '/a_32907', '/a_136398', '/a_241214', '/a_220765', '/a_219675', '/a_207116', '/a_254703', '/a_189935', '/a_220101', '/a_61316', '/a_273136', '/a_55515', '/a_242789']
 
+non_existent_books = [
+    "/b_4474313",
+    "/b_8013513",
+    "/b_53140613",
+]
+
+non_existent_authors = [
+    "/a_3036234322323433",
+    "/a_309342342334182",
+    "/a_217113422432344",
+]
 
 async def get_results():
     books_tasks = []
     authors_tasks = []
+    nonexistent_books_tasks = []
+    nonexistent_authors_tasks = []
+    loop = asyncio.get_event_loop()
     for link in books:
-        books_tasks.append(asyncio.create_task(Flibusta.get_page(link)))
+        books_tasks.append(loop.create_task(Flibusta.get_page(link)))
     for link in authors:
-        authors_tasks.append(asyncio.create_task(Flibusta.get_page(link)))
+        authors_tasks.append(loop.create_task(Flibusta.get_page(link)))
+    for link in non_existent_books:
+        nonexistent_books_tasks.append(loop.create_task(Flibusta.get_page(link)))
+    for link in non_existent_authors:
+        nonexistent_authors_tasks.append(loop.create_task(Flibusta.get_page(link)))
     books_tasks = await asyncio.gather(*books_tasks)
     authors_tasks = await asyncio.gather(*authors_tasks)
-    return books_tasks, authors_tasks
+    nonexistent_books_tasks = await asyncio.gather(*nonexistent_books_tasks)
+    nonexistent_authors_tasks = await asyncio.gather(*nonexistent_authors_tasks)
+    return books_tasks, authors_tasks, nonexistent_books_tasks, nonexistent_authors_tasks
 
 class ParserTests(TestCase):
 
-    book_pages, authors_pages = asyncio.run(get_results())
+    book_pages, authors_pages, nonexistent_books_tasks, nonexistent_authors_tasks = asyncio.run(get_results())
 
     @parameterized.expand([(page,) for page in book_pages])
     def test_book_page(self, book_page: BookPage):
         print(book_page.name, book_page.links)
         self.assertTrue(book_page.name)
-        self.assertTrue(book_page.author)
+        self.assertTrue(book_page.author_name)
         self.assertTrue(book_page.author_link)
         self.assertTrue(book_page.links)
         self.assertTrue(book_page.num)
@@ -56,9 +77,24 @@ class ParserTests(TestCase):
 
     @parameterized.expand([(page,) for page in authors_pages])
     def test_author_page(self, author_page: AuthorPage):
-        print(author_page.author)
-        self.assertTrue(author_page.author)
+        print(author_page.name)
+        self.assertTrue(author_page.name)
         self.assertTrue(author_page.books)
+
+    @parameterized.expand([(page,) for page in nonexistent_books_tasks])
+    def test_nonexistent_book_pages(self, book_page: BookPage):
+        print(book_page.name)
+        self.assertEqual(book_page.name, BookPage.doesnt_exist)
+        self.assertFalse(book_page.author_name)
+        self.assertFalse(book_page.author_link)
+        self.assertFalse(book_page.links)
+        self.assertFalse(book_page.num)
+
+    @parameterized.expand([(page,) for page in nonexistent_authors_tasks])
+    def test_nonexistent_author_pages(self, author_page: AuthorPage):
+        print(author_page.name)
+        self.assertEqual(author_page.name, AuthorPage.doesnt_exist)
+        self.assertFalse(author_page.books)
 
 
 if __name__ == '__main__':

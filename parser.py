@@ -1,19 +1,18 @@
 from typing import Union
 
-import aiohttp
+from aiohttp import ClientSession
 import fake_useragent
 from bs4 import BeautifulSoup
+import re
 
 
 class InvalidLinkException(Exception):
     pass
 
-class BaseMixin:
 
-    url = "https://flibusta.is"
-    headers = {
-        "User-Agent": fake_useragent.FakeUserAgent().firefox
-    }
+class ParseMixin:
+
+    doesnt_exist = "Does not exist"
 
     @classmethod
     def _convert_link_to_tg(cls, link: str):
@@ -21,19 +20,25 @@ class BaseMixin:
         _, letter, num = link.split('/')
         return f"/{letter}_{num}"
 
-class BookPage(BaseMixin):
 
-    def __init__(self, soup: BeautifulSoup):
+class BookPage(ParseMixin):
+
+
+    def _process_variables(self, soup: BeautifulSoup):
         _header = soup.find('h1', {'class': 'title'})
         self.name = _header.text
-        self.author = _header.find_next_sibling('a').text
+        try:
+            self.author_name = _header.find_next_sibling('a').text
+        except AttributeError:
+            self.name = self.doesnt_exist
+            return
         self.author_link = self._convert_link_to_tg(_header.find_next_sibling('a').get('href'))
         try:
             self.annotation = _header.find_next_sibling('p').text
         except AttributeError:
             self.annotation = "Отсутствует."
         try:
-            self.cover_link = f"{self.url}{_header.find_next_sibling('img').get('src')}"
+            self.cover_link = _header.find_next_sibling('img').get('src')
         except AttributeError:
             self.cover_link = None
         _div = _header.find_next_sibling('div')
@@ -44,27 +49,45 @@ class BookPage(BaseMixin):
         self.links = [link.get('href') for link in _links_tags]
         self.num = int(self.links[0].split('/')[2])
 
+    def __init__(self, soup: BeautifulSoup):
+        self.name = None
+        self.author_name = None
+        self.author_link = None
+        self.annotation = None
+        self.cover_link = None
+        self.links = None
+        self.num = None
+        self._process_variables(soup)
+
     def text(self) -> str:
-        result = f"{self.name}\n\n{self.author} {self.author_link}\n\nАннотация:\n\n{self.annotation}"
+        result = f"{self.name}\n\n{self.author_name} {self.author_link}\n\nАннотация:\n\n{self.annotation}"
         return result
 
 
-class AuthorPage(BaseMixin):
+class AuthorPage(ParseMixin):
 
-    def __init__(self, soup: BeautifulSoup):
+    def _process_variables(self, soup: BeautifulSoup):
         _main = soup.find('div', {'id': 'main'})
-        self.author = _main.find('h1').text
+        self.name = _main.find('h1', {'class': 'title'}).text
         _form_post = _main.find('form', {'method': "POST"})
+        if not _form_post:
+            self.name = self.doesnt_exist
+            return
         _imgs = _form_post.find_all('img')
         self.books = [tag.find_next_sibling('a') for tag in _imgs]
 
+    def __init__(self, soup: BeautifulSoup):
+        self.name = None
+        self.books = None
+        self._process_variables(soup)
+
     def text(self) -> str:
-        result = f"{self.author}\n\n"
+        result = f"{self.name}\n\n"
         for num, book in enumerate(self.books, start=1):
             result += f"{num}) {book.text} {self._convert_link_to_tg(book['href'])}\n"
         return result
 
-class SearchPage(BaseMixin):
+class SearchPage(ParseMixin):
 
     def __init__(self, soup: BeautifulSoup):
         _headers = soup.find_all('h3')
@@ -90,28 +113,38 @@ class SearchPage(BaseMixin):
 
 
 
-class Flibusta(BaseMixin):
+class Flibusta(ParseMixin):
 
+    url = "https://flibusta.is"
+    headers = {
+        "User-Agent": fake_useragent.FakeUserAgent().firefox
+    }
+    pattern = re.compile(r"^/[ab]_\d+$")
+
+    @classmethod
+    async def _fetch(cls, url):
+        async with ClientSession(headers=cls.headers) as session:
+            response = await session.get(url)
+            return await response.read()
 
     @classmethod
     async def get_search_text(cls, query: str) -> SearchPage:
-        async with aiohttp.ClientSession(headers=cls.headers) as session:
-            resp = await session.get(f"{cls.url}/booksearch?ask={query}&cha=on&chb=on")
-            soup = BeautifulSoup(await resp.read(), "html.parser")
+        resp = await cls._fetch(f"{cls.url}/booksearch?ask={query}&cha=on&chb=on")
+        soup = BeautifulSoup(resp, "html.parser")
         return SearchPage(soup)
 
     @classmethod
     async def get_page(cls, link: str) -> Union[BookPage, AuthorPage]:
         # links type /a_1234 or /b_234
+        if not cls.pattern.match(link):
+            raise InvalidLinkException(f"{link} is not acceptable.")
         letter, num = link.lstrip('/').split('_')
         link = link.replace('_', '/')
-        async with aiohttp.ClientSession(headers=cls.headers) as session:
-            if letter=='a':
-                resp = await session.get(f"{cls.url}/{link}?lang=__&order=a&hg1=1&sa1=1&hr1=1")
-                soup = BeautifulSoup(await resp.read(),"html.parser")
-                return AuthorPage(soup)
-            elif letter=='b':
-                resp = await session.get(f"{cls.url}/{link}")
-                soup = BeautifulSoup(await resp.read(),"html.parser")
-                return BookPage(soup)
-        raise InvalidLinkException(f"{link} and its letter {letter} is not acceptable.")
+        if letter=='a':
+            resp = await cls._fetch(f"{cls.url}/{link}?lang=__&order=a&hg1=1&sa1=1&hr1=1")
+            soup = BeautifulSoup(resp,"html.parser")
+            return AuthorPage(soup)
+        elif letter=='b':
+            resp = await cls._fetch(f"{cls.url}/{link}")
+            soup = BeautifulSoup(resp,"html.parser")
+            return BookPage(soup)

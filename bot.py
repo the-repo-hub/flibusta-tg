@@ -34,7 +34,7 @@ async def book_handler(msg: Message):
     markup = get_download_markup(book_obj)
     text = book_obj.text()
     if book_obj.cover_link:
-        await bot.send_photo(msg.chat.id, photo=book_obj.cover_link, caption=text[:caption_limit], reply_markup=markup)
+        await bot.send_photo(msg.chat.id, photo=f"{Flibusta.url}{book_obj.cover_link}", caption=text[:caption_limit], reply_markup=markup)
     else:
         await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
 
