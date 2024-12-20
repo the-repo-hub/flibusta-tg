@@ -2,6 +2,7 @@ import asyncio
 import json
 
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.types import URLInputFile
@@ -34,7 +35,10 @@ async def book_handler(msg: Message):
     markup = get_download_markup(book_obj)
     text = book_obj.text()
     if book_obj.cover_link:
-        await bot.send_photo(msg.chat.id, photo=f"{Flibusta.url}{book_obj.cover_link}", caption=text[:caption_limit], reply_markup=markup)
+        try:
+            await bot.send_photo(msg.chat.id, photo=f"{Flibusta.url}{book_obj.cover_link}", caption=text[:caption_limit], reply_markup=markup)
+        except TelegramBadRequest:
+            await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
     else:
         await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
 

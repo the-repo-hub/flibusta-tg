@@ -130,7 +130,7 @@ class Flibusta(ParseMixin):
     @classmethod
     async def get_search_text(cls, query: str) -> SearchPage:
         resp = await cls._fetch(f"{cls.url}/booksearch?ask={query}&cha=on&chb=on")
-        soup = BeautifulSoup(resp, "html.parser")
+        soup = BeautifulSoup(resp, "lxml")
         return SearchPage(soup)
 
     @classmethod
@@ -141,10 +141,10 @@ class Flibusta(ParseMixin):
         letter, num = link.lstrip('/').split('_')
         link = link.replace('_', '/')
         if letter=='a':
-            resp = await cls._fetch(f"{cls.url}/{link}?lang=__&order=a&hg1=1&sa1=1&hr1=1")
-            soup = BeautifulSoup(resp,"html.parser")
+            resp = await cls._fetch(f"{cls.url}/{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1")
+            soup = BeautifulSoup(resp,"lxml")
             return AuthorPage(soup)
         elif letter=='b':
             resp = await cls._fetch(f"{cls.url}/{link}")
-            soup = BeautifulSoup(resp,"html.parser")
+            soup = BeautifulSoup(resp,"lxml")
             return BookPage(soup)

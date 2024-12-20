@@ -68,6 +68,7 @@ class ParserTests(TestCase):
     @parameterized.expand([(page,) for page in book_pages])
     def test_book_page(self, book_page: BookPage):
         print(book_page.name, book_page.links)
+        book_page.text()
         self.assertTrue(book_page.name)
         self.assertTrue(book_page.author_name)
         self.assertTrue(book_page.author_link)
@@ -78,12 +79,12 @@ class ParserTests(TestCase):
     @parameterized.expand([(page,) for page in authors_pages])
     def test_author_page(self, author_page: AuthorPage):
         print(author_page.name)
+        author_page.text()
         self.assertTrue(author_page.name)
         self.assertTrue(author_page.books)
 
     @parameterized.expand([(page,) for page in nonexistent_books_tasks])
     def test_nonexistent_book_pages(self, book_page: BookPage):
-        print(book_page.name)
         self.assertEqual(book_page.name, BookPage.doesnt_exist)
         self.assertFalse(book_page.author_name)
         self.assertFalse(book_page.author_link)
@@ -92,7 +93,6 @@ class ParserTests(TestCase):
 
     @parameterized.expand([(page,) for page in nonexistent_authors_tasks])
     def test_nonexistent_author_pages(self, author_page: AuthorPage):
-        print(author_page.name)
         self.assertEqual(author_page.name, AuthorPage.doesnt_exist)
         self.assertFalse(author_page.books)
 
