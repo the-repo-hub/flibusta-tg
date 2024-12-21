@@ -1,11 +1,11 @@
-from typing import Union
-
-from aiohttp import ClientSession
-import fake_useragent
-from bs4 import BeautifulSoup
 import re
-from aiohttp_socks import ProxyConnector
+from typing import Union
 from urllib import parse
+
+from bs4 import BeautifulSoup
+
+from base import BaseParser
+
 
 class InvalidLinkException(Exception):
     pass
@@ -113,25 +113,15 @@ class SearchPage(ParseMixin):
         return result
 
 
-class Flibusta(ParseMixin):
+class Flibusta(BaseParser):
 
     url = "https://flibusta.is"
-    proxy = "socks5://localhost:9050"
-    headers = {
-        "User-Agent": fake_useragent.FakeUserAgent().firefox
-    }
     pattern = re.compile(r"^/[ab]_\d+$")
 
     @classmethod
-    async def _fetch(cls, url):
-        connector = ProxyConnector.from_url(cls.proxy, rdns=True)
-        async with ClientSession(headers=cls.headers, connector=connector) as session:
-            response = await session.get(url)
-            return await response.read()
-
-    @classmethod
     async def get_search_text(cls, query: str) -> SearchPage:
-        resp = await cls._fetch(f"{cls.url}/booksearch?ask={query}&cha=on&chb=on")
+        url = parse.urljoin(cls.url, f"booksearch?ask={query}&cha=on&chb=on")
+        resp = await cls._fetch(url)
         soup = BeautifulSoup(resp, "lxml")
         return SearchPage(soup)
 
@@ -143,8 +133,7 @@ class Flibusta(ParseMixin):
         letter, num = link.lstrip('/').split('_')
         link = link.replace('_', '/')
         if letter=='a':
-            link = f"{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1"
-            url = parse.urljoin(cls.url, link)
+            url = parse.urljoin(cls.url, f"{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1")
             resp = await cls._fetch(url)
             soup = BeautifulSoup(resp,"lxml")
             return AuthorPage(soup)
