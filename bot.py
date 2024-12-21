@@ -56,10 +56,14 @@ async def search_handler(msg: Message):
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):
     full_url = f"{Flibusta.url}{call.data}"
-    name = call.message.html_text.split('\n\n')[0]
+    msg = call.message
+    name = msg.html_text.split('\n\n')[0]
     full_name = f"{name}.{call.data.split('/')[-1]}"
-    await bot.send_document(call.message.chat.id, URLInputFile(full_url, filename=full_name))
+    coro = bot.send_document(msg.chat.id, URLInputFile(full_url, filename=full_name))
     await call.answer()
+    await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Загружается: {full_name}")
+    await coro
+    await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=msg.text, reply_markup=msg.reply_markup)
 
 async def main() -> None:
     await dp.start_polling(bot)
