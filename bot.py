@@ -9,9 +9,10 @@ from aiogram.types import URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
 from parser import Flibusta, BookPage
+from aiogram.client.session.aiohttp import AiohttpSession
 
 options = json.loads(open("options.json").read())
-bot = Bot(token=options.get('token'))
+bot = Bot(token=options.get('token'), session=AiohttpSession(proxy=Flibusta.proxy))
 dp = Dispatcher()
 message_limit = 4096
 caption_limit = 1024

@@ -8,7 +8,8 @@ from aiohttp import ClientSession
 
 class TestTor(TestCase):
 
-    async def _no_tor_fetch(self, url: str):
+    @staticmethod
+    async def _no_tor_fetch(url: str):
         async with ClientSession(headers=Flibusta.headers) as session:
             response = await session.get(url)
             return await response.read()

@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 import fake_useragent
 from bs4 import BeautifulSoup
 import re
-from aiohttp_socks import SocksConnector
+from aiohttp_socks import ProxyConnector
 
 class InvalidLinkException(Exception):
     pass
@@ -123,7 +123,7 @@ class Flibusta(ParseMixin):
 
     @classmethod
     async def _fetch(cls, url):
-        connector = SocksConnector.from_url(cls.proxy, rdns=True)
+        connector = ProxyConnector.from_url(cls.proxy, rdns=True)
         async with ClientSession(headers=cls.headers, connector=connector) as session:
             response = await session.get(url)
             return await response.read()
