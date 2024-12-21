@@ -5,6 +5,7 @@ import fake_useragent
 from bs4 import BeautifulSoup
 import re
 from aiohttp_socks import ProxyConnector
+from urllib import parse
 
 class InvalidLinkException(Exception):
     pass
@@ -142,10 +143,13 @@ class Flibusta(ParseMixin):
         letter, num = link.lstrip('/').split('_')
         link = link.replace('_', '/')
         if letter=='a':
-            resp = await cls._fetch(f"{cls.url}/{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1")
+            link = f"{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1"
+            url = parse.urljoin(cls.url, link)
+            resp = await cls._fetch(url)
             soup = BeautifulSoup(resp,"lxml")
             return AuthorPage(soup)
         elif letter=='b':
-            resp = await cls._fetch(f"{cls.url}/{link}")
+            url = parse.urljoin(cls.url, link)
+            resp = await cls._fetch(url)
             soup = BeautifulSoup(resp,"lxml")
             return BookPage(soup)

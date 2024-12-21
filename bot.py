@@ -61,9 +61,15 @@ async def download_book_handler(call: CallbackQuery):
     full_name = f"{name}.{call.data.split('/')[-1]}"
     coro = bot.send_document(msg.chat.id, URLInputFile(full_url, filename=full_name))
     await call.answer()
-    await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Загружается: {full_name}")
-    await coro
-    await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=msg.text, reply_markup=msg.reply_markup)
+    if msg.caption:
+        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=f"Загружается: {full_name}")
+        await coro
+        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=msg.text,
+                                    reply_markup=msg.reply_markup)
+    else:
+        await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Загружается: {full_name}")
+        await coro
+        await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=msg.text, reply_markup=msg.reply_markup)
 
 async def main() -> None:
     await dp.start_polling(bot)
