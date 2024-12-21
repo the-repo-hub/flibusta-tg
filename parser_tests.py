@@ -63,7 +63,7 @@ async def get_results():
 
 class ParserTests(TestCase):
 
-    book_pages, authors_pages, nonexistent_books_tasks, nonexistent_authors_tasks = asyncio.run(get_results())
+    book_pages, authors_pages, nonexistent_books_pages, nonexistent_authors_pages = asyncio.run(get_results())
 
     @parameterized.expand([(page,) for page in book_pages])
     def test_book_page(self, book_page: BookPage):
@@ -83,7 +83,7 @@ class ParserTests(TestCase):
         self.assertTrue(author_page.name)
         self.assertTrue(author_page.books)
 
-    @parameterized.expand([(page,) for page in nonexistent_books_tasks])
+    @parameterized.expand([(page,) for page in nonexistent_books_pages])
     def test_nonexistent_book_pages(self, book_page: BookPage):
         self.assertEqual(book_page.name, BookPage.doesnt_exist)
         self.assertFalse(book_page.author_name)
@@ -91,7 +91,7 @@ class ParserTests(TestCase):
         self.assertFalse(book_page.links)
         self.assertFalse(book_page.num)
 
-    @parameterized.expand([(page,) for page in nonexistent_authors_tasks])
+    @parameterized.expand([(page,) for page in nonexistent_authors_pages])
     def test_nonexistent_author_pages(self, author_page: AuthorPage):
         self.assertEqual(author_page.name, AuthorPage.doesnt_exist)
         self.assertFalse(author_page.books)

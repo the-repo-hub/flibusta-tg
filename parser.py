@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 import fake_useragent
 from bs4 import BeautifulSoup
 import re
-
+from aiohttp_socks import SocksConnector
 
 class InvalidLinkException(Exception):
     pass
@@ -112,10 +112,10 @@ class SearchPage(ParseMixin):
         return result
 
 
-
 class Flibusta(ParseMixin):
 
     url = "https://flibusta.is"
+    proxy = "socks5://localhost:9050"
     headers = {
         "User-Agent": fake_useragent.FakeUserAgent().firefox
     }
@@ -123,7 +123,8 @@ class Flibusta(ParseMixin):
 
     @classmethod
     async def _fetch(cls, url):
-        async with ClientSession(headers=cls.headers) as session:
+        connector = SocksConnector.from_url(cls.proxy, rdns=True)
+        async with ClientSession(headers=cls.headers, connector=connector) as session:
             response = await session.get(url)
             return await response.read()
 
