@@ -8,7 +8,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.types import URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
-from parser import Flibusta, BookPage
+from flibusta import Flibusta, BookPage
 from aiogram.client.session.aiohttp import AiohttpSession
 
 options = json.loads(open("options.json").read())

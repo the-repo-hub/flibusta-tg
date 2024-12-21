@@ -3,7 +3,7 @@ from unittest import TestCase
 from stem.control import Controller
 import json
 import asyncio
-from parser import Flibusta
+from flibusta import Flibusta
 from aiohttp import ClientSession
 
 class TestTor(TestCase):

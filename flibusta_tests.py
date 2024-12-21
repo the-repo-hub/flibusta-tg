@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from parameterized import parameterized
 
-from parser import Flibusta, BookPage, AuthorPage
+from flibusta import Flibusta, BookPage, AuthorPage, SearchPage
 
 books = [
             "/b_531326", "/b_143909", "/b_531366", "/b_179296", "/b_10501", "/b_807198", "/b_178074", "/b_10500",
@@ -41,7 +41,7 @@ non_existent_authors = [
     "/a_217113422432344",
 ]
 
-async def get_results():
+async def get_pages():
     books_tasks = []
     authors_tasks = []
     nonexistent_books_tasks = []
@@ -61,9 +61,20 @@ async def get_results():
     nonexistent_authors_tasks = await asyncio.gather(*nonexistent_authors_tasks)
     return books_tasks, authors_tasks, nonexistent_books_tasks, nonexistent_authors_tasks
 
+async def get_search_pages():
+    query = "Чехов"
+    query_non_exist = "jsfksfjkdjkf"
+
+    return await asyncio.gather(
+        Flibusta.get_search_text(query),
+        Flibusta.get_search_text(query_non_exist)
+    )
+
 class ParserTests(TestCase):
 
-    book_pages, authors_pages, nonexistent_books_pages, nonexistent_authors_pages = asyncio.run(get_results())
+    book_pages, authors_pages, nonexistent_books_pages, nonexistent_authors_pages = asyncio.run(get_pages())
+    search_page, search_page_non_exist = asyncio.run(get_search_pages())
+
 
     @parameterized.expand([(page,) for page in book_pages])
     def test_book_page(self, book_page: BookPage):
@@ -96,6 +107,12 @@ class ParserTests(TestCase):
         self.assertEqual(author_page.name, AuthorPage.doesnt_exist)
         self.assertFalse(author_page.books)
 
+    def test_search_pages(self):
+        self.assertTrue(self.search_page.dict)
+        self.search_page.text()
+
+    def test_search_page_non_exist(self):
+        self.assertFalse(self.search_page_non_exist.dict)
 
 if __name__ == '__main__':
     unittest.main()
