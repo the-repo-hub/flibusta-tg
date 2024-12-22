@@ -65,7 +65,7 @@ async def download_book_handler(call: CallbackQuery):
     if msg.caption:
         await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=f"Загружается: {full_name}")
         await coro
-        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=msg.text,
+        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=msg.caption,
                                     reply_markup=msg.reply_markup)
     else:
         await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Загружается: {full_name}")
