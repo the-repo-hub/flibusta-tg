@@ -1,7 +1,6 @@
 from aiohttp import ClientSession
 from aiohttp_socks import ProxyConnector
 import fake_useragent
-
 class BaseParser:
 
     proxy = "socks5://localhost:9050"
@@ -10,7 +9,7 @@ class BaseParser:
     }
 
     @classmethod
-    async def _fetch(cls, url):
+    async def _fetch(cls, url) -> bytes:
         connector = ProxyConnector.from_url(cls.proxy, rdns=True)
         async with ClientSession(headers=cls.headers, connector=connector) as session:
             response = await session.get(url)
