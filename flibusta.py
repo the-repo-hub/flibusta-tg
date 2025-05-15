@@ -4,7 +4,7 @@ from urllib import parse
 
 from bs4 import BeautifulSoup
 
-from base import BaseParser
+from base import BaseRequest
 
 
 class InvalidLinkException(Exception):
@@ -113,9 +113,8 @@ class SearchPage(ParseMixin):
         return result
 
 
-class Flibusta(BaseParser):
+class Flibusta(BaseRequest):
 
-    url = "https://flibusta.is"
     pattern = re.compile(r"^/[ab]_\d+$")
 
     @classmethod

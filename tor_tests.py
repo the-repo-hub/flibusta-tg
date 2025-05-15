@@ -6,19 +6,19 @@ from unittest import TestCase
 from aiohttp import ClientSession
 from stem.control import Controller
 
-from base import BaseParser
+from base import BaseRequest
 
 
 class TestTor(TestCase):
 
     @staticmethod
     async def _no_tor_fetch(url: str):
-        async with ClientSession(headers=BaseParser.headers) as session:
+        async with ClientSession(headers=BaseRequest.headers) as session:
             response = await session.get(url)
             return await response.read()
 
     async def _fetch_both(self, url: str):
-        return await asyncio.gather(self._no_tor_fetch(url), BaseParser._fetch(url))
+        return await asyncio.gather(self._no_tor_fetch(url), BaseRequest._fetch(url))
 
     def test_tor_service_status(self):
         with Controller.from_port(port=9051) as controller:

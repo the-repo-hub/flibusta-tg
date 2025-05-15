@@ -1,9 +1,12 @@
+import fake_useragent
 from aiohttp import ClientSession
 from aiohttp_socks import ProxyConnector
-import fake_useragent
-class BaseParser:
 
-    proxy = "socks5://localhost:9050"
+
+class BaseRequest:
+
+    url = "http://flibusta.is"
+    proxy = "http://192.168.1.124:10808"
     headers = {
         "User-Agent": fake_useragent.FakeUserAgent().firefox
     }

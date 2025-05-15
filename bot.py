@@ -2,18 +2,18 @@ import asyncio
 import json
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.types import URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
+from base import BaseRequest
 from flibusta import Flibusta, BookPage
-from aiogram.client.session.aiohttp import AiohttpSession
-from base import BaseParser
 
 options = json.loads(open("options.json").read())
-bot = Bot(token=options.get('token'), session=AiohttpSession(proxy=BaseParser.proxy))
+bot = Bot(token=options.get('token'), session=AiohttpSession(proxy=BaseRequest.proxy))
 dp = Dispatcher()
 message_limit = 4096
 caption_limit = 1024
@@ -51,6 +51,7 @@ async def author_handler(msg: Message):
 
 @dp.message()
 async def search_handler(msg: Message):
+    print(msg.text)
     result = (await Flibusta.get_search_text(msg.text)).text()
     await msg.reply(result[:message_limit])
 
