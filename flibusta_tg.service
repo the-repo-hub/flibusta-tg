@@ -1,0 +1,17 @@
+[Unit]
+Description=Flibusta bot
+After=network.target multi-user.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=howard
+WorkingDirectory=/home/howard/PycharmProjects/flibusta-tg
+ExecStart=/home/howard/PycharmProjects/flibusta-tg/.venv/bin/python /home/howard/PycharmProjects/flibusta-tg/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

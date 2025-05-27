@@ -8,13 +8,11 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.types import URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
-from options import PROXY, BOT_TOKEN
+from options import PROXY, BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
 from flibusta import Flibusta, BookPage
 
 bot = Bot(token=BOT_TOKEN, session=AiohttpSession(proxy=PROXY))
 dp = Dispatcher()
-message_limit = 4096
-caption_limit = 1024
 
 def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
     result = InlineKeyboardBuilder()
@@ -23,7 +21,6 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
         button = InlineKeyboardButton(text=_format, callback_data=link)
         result.add(button)
     return result.as_markup()
-
 
 @dp.message(CommandStart())
 async def start_handler(msg: Message):
@@ -36,22 +33,22 @@ async def book_handler(msg: Message):
     text = book_obj.text()
     if book_obj.cover_link:
         try:
-            await bot.send_photo(msg.chat.id, photo=f"{Flibusta.url}{book_obj.cover_link}", caption=text[:caption_limit], reply_markup=markup)
+            await bot.send_photo(msg.chat.id, photo=f"{Flibusta.url}{book_obj.cover_link}", caption=text[:CAPTION_LIMIT], reply_markup=markup)
         except TelegramBadRequest:
-            await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
+            await bot.send_message(msg.chat.id, text=text[:MESSAGE_LIMIT], reply_markup=markup)
     else:
-        await bot.send_message(msg.chat.id, text=text[:message_limit], reply_markup=markup)
+        await bot.send_message(msg.chat.id, text=text[:MESSAGE_LIMIT], reply_markup=markup)
 
 @dp.message(lambda msg: msg.text[:3]=="/a_")
 async def author_handler(msg: Message):
     author_obj = await Flibusta.get_page(msg.text)
-    await msg.reply(text=author_obj.text()[:message_limit])
+    await msg.reply(text=author_obj.text()[:MESSAGE_LIMIT])
 
 @dp.message()
 async def search_handler(msg: Message):
     print(msg.text)
     result = (await Flibusta.get_search_text(msg.text)).text()
-    await msg.reply(result[:message_limit])
+    await msg.reply(result[:MESSAGE_LIMIT])
 
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):

@@ -2,11 +2,13 @@ import re
 from typing import Union
 from urllib import parse
 
-from bs4 import BeautifulSoup
 import fake_useragent
 from aiohttp import ClientSession
 from aiohttp_socks import ProxyConnector
+from bs4 import BeautifulSoup
+
 from options import PROXY
+
 
 class BaseRequest:
 

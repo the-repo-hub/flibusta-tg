@@ -7,3 +7,6 @@ if not BOT_TOKEN:
 PROXY = options.get("proxy")
 if not PROXY:
     raise ValueError("Missing proxy")
+
+MESSAGE_LIMIT = 4096
+CAPTION_LIMIT = 1024
