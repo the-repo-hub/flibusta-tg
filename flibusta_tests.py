@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from parameterized import parameterized
 
-from flibusta import Flibusta, BookPage, AuthorPage, SearchPage
+from flibusta import Flibusta, BookPage, AuthorPage
 
 books = [
             "/b_531326", "/b_143909", "/b_531366", "/b_179296", "/b_10501", "/b_807198", "/b_178074", "/b_10500",

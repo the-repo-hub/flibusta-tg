@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -9,11 +8,10 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.types import URLInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
-from base import BaseRequest
+from options import PROXY, BOT_TOKEN
 from flibusta import Flibusta, BookPage
 
-options = json.loads(open("options.json").read())
-bot = Bot(token=options.get('token'), session=AiohttpSession(proxy=BaseRequest.proxy))
+bot = Bot(token=BOT_TOKEN, session=AiohttpSession(proxy=PROXY))
 dp = Dispatcher()
 message_limit = 4096
 caption_limit = 1024
