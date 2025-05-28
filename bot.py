@@ -10,8 +10,9 @@ from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, I
 
 from options import PROXY, BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
 from flibusta import Flibusta, BookPage
+from db import user_db_wrapper
 
-bot = Bot(token=BOT_TOKEN, session=AiohttpSession(proxy=PROXY))
+bot = Bot(token=BOT_TOKEN, session=AiohttpSession(proxy=PROXY, timeout=100))
 dp = Dispatcher()
 
 def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
@@ -23,10 +24,12 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
     return result.as_markup()
 
 @dp.message(CommandStart())
+@user_db_wrapper
 async def start_handler(msg: Message):
     await msg.reply("Hey! You can just input your search request")
 
 @dp.message(lambda msg: msg.text[:3]=="/b_")
+@user_db_wrapper
 async def book_handler(msg: Message):
     book_obj = await Flibusta.get_page(msg.text)
     markup = get_download_markup(book_obj)
@@ -40,11 +43,13 @@ async def book_handler(msg: Message):
         await bot.send_message(msg.chat.id, text=text[:MESSAGE_LIMIT], reply_markup=markup)
 
 @dp.message(lambda msg: msg.text[:3]=="/a_")
+@user_db_wrapper
 async def author_handler(msg: Message):
     author_obj = await Flibusta.get_page(msg.text)
     await msg.reply(text=author_obj.text()[:MESSAGE_LIMIT])
 
 @dp.message()
+@user_db_wrapper
 async def search_handler(msg: Message):
     print(msg.text)
     result = (await Flibusta.get_search_text(msg.text)).text()
