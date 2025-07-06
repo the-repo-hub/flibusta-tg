@@ -2,9 +2,9 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from aiogram.types import User as UserType, Message
 import functools
+from options import DATABASE_URL
 
-engine = create_engine("postgresql+psycopg2://flibusta_tg:secret@localhost:5432/flibusta_tg")
-
+engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
 class User(Base):
@@ -19,7 +19,6 @@ class User(Base):
     registered_on = Column(DateTime, nullable=False, default=func.now())
     last_request = Column(DateTime, nullable=False, default=func.now())
 
-Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
 def user_db_wrapper(fn):
@@ -43,3 +42,6 @@ def user_db_wrapper(fn):
         session.commit()
         return await fn(msg)
     return wrapper
+
+if __name__ == '__main__':
+    Base.metadata.create_all(engine)
