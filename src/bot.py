@@ -65,11 +65,11 @@ async def search_handler(msg: Message):
 
 async def message_or_caption_editor(msg:Message, text: str, markup=None) -> str:
     if msg.caption:
-        result = await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=text, reply_markup=markup)
-        return result.caption
+        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=text, reply_markup=markup)
+        return msg.caption
     else:
-        result = await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=text, reply_markup=markup)
-        return result.text
+        await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=text, reply_markup=markup)
+        return msg.text
 
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):
@@ -79,11 +79,11 @@ async def download_book_handler(call: CallbackQuery):
     full_name = f"{name}.{call.data.split('/')[-1]}"
     file_b_coro = Flibusta.async_fetch(full_url)
     logger.info(f"User {call.from_user.username} with id {call.from_user.id} is downloading {full_name} from {full_url}")
-    saved_text = await message_or_caption_editor(msg, f"Загружается: {full_name}")
+    old_text = await message_or_caption_editor(msg, f"Загружается: {full_name}")
     await call.answer()
     file_b = await file_b_coro
     await bot.send_document(msg.chat.id, BufferedInputFile(file_b, filename=full_name))
-    await message_or_caption_editor(msg, saved_text, msg.reply_markup)
+    await message_or_caption_editor(msg, old_text, msg.reply_markup)
 
 async def gc_handler():
     logger.info(f"Garbage collector started")
