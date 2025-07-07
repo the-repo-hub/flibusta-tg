@@ -11,7 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, I
 from db import user_db_wrapper
 from flibusta import Flibusta, BookPage
 from options import BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
-from src.options import TELEGRAM_LIMIT
+from options import TELEGRAM_LIMIT
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -35,7 +35,7 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
 @user_db_wrapper
 async def start_handler(msg: Message):
     logger.info(f"/start from {msg.from_user.username} with id {msg.from_user.id}")
-    await msg.reply("Hey! You can just input your search request")
+    await msg.reply("Напиши название книги или фамилию автора.")
 
 @dp.message(lambda msg: msg.text[:3]=="/b_")
 @user_db_wrapper
@@ -86,7 +86,7 @@ async def download_book_handler(call: CallbackQuery):
     if len(file_as_bytes) >= TELEGRAM_LIMIT:
         await bot.send_message(
             chat_id=msg.chat.id,
-            text=f"Файл {full_name} слишком большой (больше 50 МБ) и его невозможно передать через Telegram API. Попробуйте найти другую версию книги.")
+            text=f'Файл "{full_name}" слишком большой (больше 50 МБ) и его невозможно передать через Telegram API. Попробуйте найти другую версию книги.')
     else:
         await bot.send_document(msg.chat.id, BufferedInputFile(file_as_bytes, filename=full_name))
     await message_or_caption_editor(msg, old_text, msg.reply_markup)
