@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BOT_TOKEN = os.environ['BOT_TOKEN']
 if not BOT_TOKEN:
@@ -11,3 +14,4 @@ if not DATABASE_URL:
     raise ValueError('Missing database url')
 MESSAGE_LIMIT = 4096
 CAPTION_LIMIT = 1024
+TELEGRAM_MB_LIMIT = 50

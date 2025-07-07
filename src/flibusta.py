@@ -18,7 +18,7 @@ class BaseRequest:
     }
 
     @classmethod
-    async def _fetch(cls, url) -> bytes:
+    async def async_fetch(cls, url) -> bytes:
         connector = ProxyConnector.from_url(PROXY, rdns=True)
         async with ClientSession(headers=cls.headers, connector=connector) as session:
             response = await session.get(url)
@@ -137,7 +137,7 @@ class Flibusta(BaseRequest):
     @classmethod
     async def get_search_text(cls, query: str) -> SearchPage:
         url = parse.urljoin(cls.url, f"booksearch?ask={query}&cha=on&chb=on")
-        resp = await cls._fetch(url)
+        resp = await cls.async_fetch(url)
         soup = BeautifulSoup(resp, "lxml")
         return SearchPage(soup)
 
@@ -150,11 +150,11 @@ class Flibusta(BaseRequest):
         link = link.replace('_', '/')
         if letter=='a':
             url = parse.urljoin(cls.url, f"{link}?lang=__&order=b&hg1=1&hg=1&sa1=1&hr1=1&hr=1")
-            resp = await cls._fetch(url)
+            resp = await cls.async_fetch(url)
             soup = BeautifulSoup(resp,"lxml")
             return AuthorPage(soup)
         elif letter=='b':
             url = parse.urljoin(cls.url, link)
-            resp = await cls._fetch(url)
+            resp = await cls.async_fetch(url)
             soup = BeautifulSoup(resp,"lxml")
             return BookPage(soup)

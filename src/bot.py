@@ -1,19 +1,26 @@
 import asyncio
+import gc
+import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
-from aiogram.types import URLInputFile
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
-from options import PROXY, BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
-from flibusta import Flibusta, BookPage
 from db import user_db_wrapper
+from flibusta import Flibusta, BookPage
+from options import BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
 
-bot = Bot(token=BOT_TOKEN, session=AiohttpSession(proxy=PROXY, timeout=100))
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+logger = logging.getLogger("Bot logger")
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
     result = InlineKeyboardBuilder()
@@ -26,6 +33,7 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
 @dp.message(CommandStart())
 @user_db_wrapper
 async def start_handler(msg: Message):
+    logger.info(f"/start from {msg.from_user.username} with id {msg.from_user.id}")
     await msg.reply("Hey! You can just input your search request")
 
 @dp.message(lambda msg: msg.text[:3]=="/b_")
@@ -51,9 +59,17 @@ async def author_handler(msg: Message):
 @dp.message()
 @user_db_wrapper
 async def search_handler(msg: Message):
-    print(msg.text)
+    logger.info(f"Search query {msg.text} from {msg.from_user.username} with id {msg.from_user.id}")
     result = (await Flibusta.get_search_text(msg.text)).text()
     await msg.reply(result[:MESSAGE_LIMIT])
+
+async def message_or_caption_editor(msg:Message, text: str, markup=None) -> str:
+    if msg.caption:
+        result = await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=text, reply_markup=markup)
+        return result.caption
+    else:
+        result = await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=text, reply_markup=markup)
+        return result.text
 
 @dp.callback_query()
 async def download_book_handler(call: CallbackQuery):
@@ -61,20 +77,25 @@ async def download_book_handler(call: CallbackQuery):
     msg = call.message
     name = msg.html_text.split('\n\n')[0]
     full_name = f"{name}.{call.data.split('/')[-1]}"
-    coro = bot.send_document(msg.chat.id, URLInputFile(full_url, filename=full_name))
+    file_b_coro = Flibusta.async_fetch(full_url)
+    logger.info(f"User {call.from_user.username} with id {call.from_user.id} is downloading {full_name} from {full_url}")
+    saved_text = await message_or_caption_editor(msg, f"Загружается: {full_name}")
     await call.answer()
-    if msg.caption:
-        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=f"Загружается: {full_name}")
-        await coro
-        await bot.edit_message_caption(chat_id=msg.chat.id, message_id=msg.message_id, caption=msg.caption,
-                                    reply_markup=msg.reply_markup)
-    else:
-        await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Загружается: {full_name}")
-        await coro
-        await bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=msg.text, reply_markup=msg.reply_markup)
+    file_b = await file_b_coro
+    await bot.send_document(msg.chat.id, BufferedInputFile(file_b, filename=full_name))
+    await message_or_caption_editor(msg, saved_text, msg.reply_markup)
+
+async def gc_handler():
+    logger.info(f"Garbage collector started")
+    while True:
+        await asyncio.sleep(3600)
+        gc.collect()
+        logger.info("Garbage collector has worked")
 
 async def main() -> None:
-    await dp.start_polling(bot)
+    loop = asyncio.get_event_loop()
+    loop.create_task(gc_handler())
+    await dp.start_polling(bot, loop=loop)
 
 if __name__ == '__main__':
     asyncio.run(main())
