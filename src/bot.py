@@ -11,6 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, I
 from db import user_db_wrapper
 from flibusta import Flibusta, BookPage
 from options import BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
+from src.options import TELEGRAM_LIMIT
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -81,9 +82,15 @@ async def download_book_handler(call: CallbackQuery):
     logger.info(f"User {call.from_user.username} with id {call.from_user.id} is downloading {full_name} from {full_url}")
     old_text = await message_or_caption_editor(msg, f"Загружается: {full_name}")
     await call.answer()
-    file_b = await file_b_coro
-    await bot.send_document(msg.chat.id, BufferedInputFile(file_b, filename=full_name))
+    file_as_bytes = await file_b_coro
+    if len(file_as_bytes) >= TELEGRAM_LIMIT:
+        await bot.send_message(
+            chat_id=msg.chat.id,
+            text=f"Файл {full_name} слишком большой (больше 50 МБ) и его невозможно передать через Telegram API. Попробуйте найти другую версию книги.")
+    else:
+        await bot.send_document(msg.chat.id, BufferedInputFile(file_as_bytes, filename=full_name))
     await message_or_caption_editor(msg, old_text, msg.reply_markup)
+
 
 async def gc_handler():
     logger.info(f"Garbage collector started")
