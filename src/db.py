@@ -40,7 +40,7 @@ class UserMiddleware(BaseMiddleware):
                 language_code=event.from_user.language_code,
             )
             session.add(user)
-            session.commit()
+            await session.commit()
         self.user_cache[event.from_user.id] = user
         return user
 
@@ -50,7 +50,7 @@ class UserMiddleware(BaseMiddleware):
         if user is None:
             async with Session() as session:
                 await self.get_or_create_user(event, session)
-        return await handler(event, data)
+        return await handler(update, data)
 
 async def init_db() -> bool:
     async with engine.begin() as conn:
