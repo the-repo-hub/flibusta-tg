@@ -49,9 +49,9 @@ services:
       timeout: 3s
       retries: 3
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # save data from container
+      - flibusta_data:/var/lib/postgresql/data  # save data from container
 networks:
   flibusta_net:
     driver: bridge
 volumes:
-  postgres_data:
+  flibusta_data:

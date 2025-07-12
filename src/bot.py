@@ -8,13 +8,15 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardMarkup, InlineKeyboardBuilder
 
-from db import user_db_wrapper
+from db import UserMiddleware, init_db
 from flibusta import Flibusta, BookPage
 from options import BOT_TOKEN, MESSAGE_LIMIT, CAPTION_LIMIT
 from options import TELEGRAM_LIMIT
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+middleware = UserMiddleware()
+dp.update.outer_middleware(middleware)
 logger = logging.getLogger("Bot logger")
 logger.setLevel(logging.INFO)
 console_handler = logging.StreamHandler()
@@ -32,13 +34,11 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
     return result.as_markup()
 
 @dp.message(CommandStart())
-@user_db_wrapper
 async def start_handler(msg: Message):
     logger.info(f"/start from {msg.from_user.username} with id {msg.from_user.id}")
     await msg.answer("Напиши название книги или фамилию автора.")
 
-@dp.message(lambda msg: msg.text[:3]=="/b_")
-@user_db_wrapper
+@dp.message(lambda msg: msg.text.startswith("/b_"))
 async def book_handler(msg: Message):
     book_obj = await Flibusta.get_page(msg.text)
     if book_obj.size >= TELEGRAM_LIMIT:
@@ -56,14 +56,12 @@ async def book_handler(msg: Message):
     else:
         await bot.send_message(msg.chat.id, text=text[:MESSAGE_LIMIT], reply_markup=markup)
 
-@dp.message(lambda msg: msg.text[:3]=="/a_")
-@user_db_wrapper
+@dp.message(lambda msg: msg.text.startswith("/a_"))
 async def author_handler(msg: Message):
     author_obj = await Flibusta.get_page(msg.text)
     await msg.answer(text=author_obj.text()[:MESSAGE_LIMIT])
 
 @dp.message()
-@user_db_wrapper
 async def search_handler(msg: Message):
     logger.info(f"Search query {msg.text} from {msg.from_user.username} with id {msg.from_user.id}")
     result = (await Flibusta.get_search_text(msg.text)).text()
@@ -101,6 +99,11 @@ async def gc_handler():
 async def main() -> None:
     loop = asyncio.get_event_loop()
     loop.create_task(gc_handler())
+    table_exists = await init_db()
+    if table_exists:
+        logger.info("Database table already exists")
+    else:
+        logger.info("Database table was created")
     await dp.start_polling(bot, loop=loop)
 
 if __name__ == '__main__':
