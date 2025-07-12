@@ -1,15 +1,13 @@
-FROM python:3.11-slim as runtime
+FROM python:3.11-alpine as runtime
 ARG IMAGE_NAME=flibusta_bot
-#poetry
-RUN pip install --no-cache-dir poetry==1.8.5
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libpq-dev gcc python3-dev && \
-    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /opt/flibusta/
+
+#poetry
 COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.in-project true
-RUN poetry install --no-interaction --no-ansi
+RUN pip install --no-cache-dir poetry==1.8.5 && \
+    poetry config virtualenvs.in-project true && \
+    poetry install --no-interaction --no-ansi --only main
 ENV PATH="/opt/flibusta/.venv/bin:$PATH"
 
 #move code
