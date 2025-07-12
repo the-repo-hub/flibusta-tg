@@ -14,4 +14,4 @@ if not DATABASE_URL:
     raise ValueError('Missing database url')
 MESSAGE_LIMIT = 4096
 CAPTION_LIMIT = 1024
-TELEGRAM_LIMIT = 50 * 1024 * 1024
+TELEGRAM_LIMIT = 50 * 1024 # mb * 1024 == kilo

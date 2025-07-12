@@ -27,7 +27,6 @@ class BaseRequest:
 class InvalidLinkException(Exception):
     pass
 
-
 class ParseMixin:
 
     doesnt_exist = "Does not exist"
@@ -61,6 +60,7 @@ class BookPage(ParseMixin):
             self.cover_link = None
         _div = _header.find_next_sibling('div')
         _span_size = _div.find('span', {'style': 'size'})
+        self.size = int(_span_size.text.split(', ')[0][:-1])
         _links_tags = _span_size.find_next_siblings('a')
         if len(_links_tags) > 1:
             _links_tags = _links_tags[1:]

@@ -35,12 +35,17 @@ def get_download_markup(bookpage: BookPage) -> InlineKeyboardMarkup:
 @user_db_wrapper
 async def start_handler(msg: Message):
     logger.info(f"/start from {msg.from_user.username} with id {msg.from_user.id}")
-    await msg.reply("Напиши название книги или фамилию автора.")
+    await msg.answer("Напиши название книги или фамилию автора.")
 
 @dp.message(lambda msg: msg.text[:3]=="/b_")
 @user_db_wrapper
 async def book_handler(msg: Message):
     book_obj = await Flibusta.get_page(msg.text)
+    if book_obj.size >= TELEGRAM_LIMIT:
+        await bot.send_message(
+            chat_id=msg.chat.id,
+            text=f'Книга слишком большая (больше 50 МБ) и его невозможно передать через Telegram API. Попробуйте найти другую версию книги.')
+        return
     markup = get_download_markup(book_obj)
     text = book_obj.text()
     if book_obj.cover_link:
@@ -55,7 +60,7 @@ async def book_handler(msg: Message):
 @user_db_wrapper
 async def author_handler(msg: Message):
     author_obj = await Flibusta.get_page(msg.text)
-    await msg.reply(text=author_obj.text()[:MESSAGE_LIMIT])
+    await msg.answer(text=author_obj.text()[:MESSAGE_LIMIT])
 
 @dp.message()
 @user_db_wrapper
@@ -83,14 +88,8 @@ async def download_book_handler(call: CallbackQuery):
     old_text = await message_or_caption_editor(msg, f"Загружается: {full_name}")
     await call.answer()
     file_as_bytes = await file_b_coro
-    if len(file_as_bytes) >= TELEGRAM_LIMIT:
-        await bot.send_message(
-            chat_id=msg.chat.id,
-            text=f'Файл "{full_name}" слишком большой (больше 50 МБ) и его невозможно передать через Telegram API. Попробуйте найти другую версию книги.')
-    else:
-        await bot.send_document(msg.chat.id, BufferedInputFile(file_as_bytes, filename=full_name))
+    await bot.send_document(msg.chat.id, BufferedInputFile(file_as_bytes, filename=full_name))
     await message_or_caption_editor(msg, old_text, msg.reply_markup)
-
 
 async def gc_handler():
     logger.info(f"Garbage collector started")
